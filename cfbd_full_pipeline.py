@@ -406,6 +406,10 @@ def main():
     teams, players = pull_rosters(args.season, api_key)
 
     all_rows = {}
+    if not players:
+        print(f"[{args.season}] no rosters published yet -- falling back to {args.season - 1}")
+        args.season -= 1
+        teams, players = pull_rosters(args.season, api_key)
     for year in years:
         print(f"[{year}] pulling season stats…")
         all_rows.update(pull_season_stats(year, api_key, teams, players))
