@@ -1,6 +1,6 @@
 {
  "generated": "2026-07-30",
- "season": 2026,
+ "season": 2025,
  "years": [
   2021,
   2022,
@@ -9,5 +9,83 @@
   2025,
   2026
  ],
- "conferences": []
+ "conferences": [
+  {
+   "name": "ACC",
+   "slug": "acc",
+   "file": "seasons_acc.json",
+   "players": 95,
+   "rows": 148
+  },
+  {
+   "name": "American Athletic",
+   "slug": "american_athletic",
+   "file": "seasons_american_athletic.json",
+   "players": 24,
+   "rows": 39
+  },
+  {
+   "name": "Big 12",
+   "slug": "big_12",
+   "file": "seasons_big_12.json",
+   "players": 26,
+   "rows": 45
+  },
+  {
+   "name": "Big Ten",
+   "slug": "big_ten",
+   "file": "seasons_big_ten.json",
+   "players": 24,
+   "rows": 40
+  },
+  {
+   "name": "Conference USA",
+   "slug": "conference_usa",
+   "file": "seasons_conference_usa.json",
+   "players": 9,
+   "rows": 15
+  },
+  {
+   "name": "FBS Independents",
+   "slug": "fbs_independents",
+   "file": "seasons_fbs_independents.json",
+   "players": 5,
+   "rows": 8
+  },
+  {
+   "name": "Mid-American",
+   "slug": "mid_american",
+   "file": "seasons_mid_american.json",
+   "players": 14,
+   "rows": 23
+  },
+  {
+   "name": "Mountain West",
+   "slug": "mountain_west",
+   "file": "seasons_mountain_west.json",
+   "players": 12,
+   "rows": 20
+  },
+  {
+   "name": "Pac-12",
+   "slug": "pac_12",
+   "file": "seasons_pac_12.json",
+   "players": 1,
+   "rows": 1
+  },
+  {
+   "name": "SEC",
+   "slug": "sec",
+   "file": "seasons_sec.json",
+   "players": 96,
+   "rows": 140
+  },
+  {
+   "name": "Sun Belt",
+   "slug": "sun_belt",
+   "file": "seasons_sun_belt.json",
+   "players": 40,
+   "rows": 63
+  }
+ ]
 }
