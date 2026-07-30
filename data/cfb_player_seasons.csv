@@ -1,0 +1,5 @@
+# data_sources: CollegeFootballData.com API (live pull); ESPN CFB, Sports-Reference CFB, Pro-Football-Reference/Stathead (verification & comparables)
+# last_updated: 2026-07-30
+# scope: All FBS skill-position players (QB, RB, WR, TE, ATH) with stats accrued in their college careers
+# note: comparable stat summaries are approximate; verify on Sports-Reference before relying on them
+player_id,full_name,espn_id,school,conference,position,class_year,height_in,weight_lb,hometown,season_year,games_played,games_started,pass_att,pass_comp,pass_cmp_pct,pass_yds,pass_td,pass_int,pass_yds_per_att,passer_rating,rush_att,rush_yds,rush_td,rush_yds_per_att,rec,rec_yds,rec_td,rec_yds_per_rec,nfl_comparable_name,nfl_comparable_position,nfl_comparable_college,nfl_comparable_college_season_year,nfl_comparable_college_stats_summary,similarity_notes,data_status
