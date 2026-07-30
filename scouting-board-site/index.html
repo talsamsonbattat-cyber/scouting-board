@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Scouting Board — FBS Player-Season Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0C0409; --bg-row:#1B0A14; --bg-row-alt:#22101B; --bg-panel:#170810;
+    --maroon:#8C1338; --maroon-bright:#C81E4B; --maroon-dim:#4A0D22;
+    --yellow:#FFD23F; --yellow-dim:#C9A227;
+    --text:#F1E6D8; --text-dim:#9C8B93;
+    --line: rgba(255,210,63,0.14);
+    --glow-y: 0 0 6px rgba(255,210,63,0.45);
+    --glow-m: 0 0 10px rgba(200,30,75,0.55);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: radial-gradient(ellipse at top, rgba(140,19,56,0.18), transparent 60%), var(--bg);
+    color:var(--text);
+    font-family:'Share Tech Mono', monospace;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:0 0 40px;}
+  a{color:var(--yellow);text-decoration:none;}
+  a:hover{text-shadow:var(--glow-y);}
+
+  header{
+    background:linear-gradient(180deg, var(--maroon-dim) 0%, var(--bg) 100%);
+    padding:22px 20px 16px;
+    display:flex;align-items:flex-end;justify-content:space-between;
+    flex-wrap:wrap;gap:12px;
+    border-bottom:2px solid var(--maroon-bright);
+    box-shadow:0 2px 20px rgba(200,30,75,0.25);
+  }
+  .title-block h1{
+    font-family:'Anton', sans-serif;
+    font-size:clamp(22px,4.5vw,36px);
+    letter-spacing:1px;margin:0;line-height:0.95;text-transform:uppercase;
+    color:var(--yellow);text-shadow:var(--glow-y);
+  }
+  .title-block h1 a{color:inherit;}
+  .title-block .sub{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;}
+  .stamp{
+    font-size:11px;border:1px solid var(--maroon-bright);color:var(--maroon-bright);
+    padding:6px 10px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;
+    box-shadow:var(--glow-m);
+  }
+  .content{padding:0 16px;}
+
+  .meta-bar{
+    margin:12px 0 0;padding:9px 12px;background:var(--bg-panel);border:1px solid var(--line);
+    font-size:10.5px;color:var(--text-dim);letter-spacing:0.5px;
+    display:flex;flex-wrap:wrap;gap:5px 20px;
+  }
+  .meta-bar b{color:var(--yellow-dim);font-weight:400;}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;}
+  .tab{
+    background:var(--bg-panel);border:1px solid var(--line);color:var(--text-dim);
+    font-family:inherit;font-size:12.5px;letter-spacing:1px;text-transform:uppercase;
+    padding:8px 15px;cursor:pointer;
+  }
+  .tab .count{color:var(--maroon-bright);}
+  .tab.active{color:var(--yellow);border-color:var(--yellow);box-shadow:var(--glow-y);}
+
+  .filter-row{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin:12px 0;padding:10px 12px;background:var(--bg-panel);border:1px solid var(--line);
+  }
+  select, input[type=text], input[type=number], textarea{
+    background:var(--bg-row);border:1px solid var(--yellow-dim);color:var(--text);
+    font-family:inherit;font-size:13px;padding:6px 8px;outline:none;max-width:100%;
+  }
+  select:focus, input:focus, textarea:focus{border-color:var(--yellow);box-shadow:var(--glow-y);}
+  .check-label{display:flex;align-items:center;gap:7px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+  .check-label input[type=checkbox]{appearance:none;width:15px;height:15px;border:1px solid var(--yellow-dim);background:var(--bg-row);cursor:pointer;flex:0 0 auto;}
+  .check-label input[type=checkbox]:checked{background:var(--yellow);box-shadow:var(--glow-y);}
+  .spacer{flex:1;}
+
+  .btn{
+    background:var(--maroon);border:1px solid var(--maroon-bright);color:var(--text);
+    font-family:inherit;font-size:11.5px;letter-spacing:1px;text-transform:uppercase;
+    padding:8px 13px;cursor:pointer;
+  }
+  .btn:hover{background:var(--maroon-bright);box-shadow:var(--glow-m);}
+  .btn.gold{background:transparent;border-color:var(--yellow-dim);color:var(--yellow);}
+  .btn.gold:hover{border-color:var(--yellow);box-shadow:var(--glow-y);background:rgba(255,210,63,0.08);}
+  .btn.small{padding:5px 9px;font-size:10.5px;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;}
+
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);-webkit-overflow-scrolling:touch;}
+  table.board{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px;}
+  table.board th{
+    background:var(--maroon-dim);color:var(--yellow);text-transform:uppercase;
+    letter-spacing:1px;font-size:10px;font-weight:400;padding:9px 8px;text-align:left;
+    white-space:nowrap;border-bottom:1px solid var(--maroon-bright);position:sticky;top:0;z-index:2;
+  }
+  table.board th.num, table.board td.num{text-align:right;}
+  table.board td{padding:8px;border-bottom:1px solid rgba(255,210,63,0.07);white-space:nowrap;}
+  /* sticky player column for mobile horizontal scroll */
+  table.board th:first-child, table.board td:first-child{
+    position:sticky;left:0;z-index:1;
+    background:var(--bg-row);
+    box-shadow:1px 0 0 var(--line);
+    max-width:170px;overflow:hidden;text-overflow:ellipsis;
+  }
+  table.board th:first-child{background:var(--maroon-dim);z-index:3;}
+  tr.prow{background:var(--bg-row);cursor:pointer;}
+  tr.prow:nth-child(4n+3){background:var(--bg-row-alt);}
+  tr.prow:nth-child(4n+3) td:first-child{background:var(--bg-row-alt);}
+  tr.prow:hover td{background:rgba(200,30,75,0.10);}
+  tr.prow.example td{opacity:0.75;}
+  .pos-badge{display:inline-block;border:1px solid var(--maroon-bright);color:var(--maroon-bright);font-size:10px;letter-spacing:1px;padding:2px 6px;}
+  .example-badge{display:inline-block;border:1px dashed var(--yellow-dim);color:var(--yellow-dim);font-size:9px;letter-spacing:1px;padding:1px 5px;margin-left:6px;text-transform:uppercase;}
+  .player-name a{color:var(--yellow);}
+  .comp-cell{color:var(--text-dim);max-width:210px;overflow:hidden;text-overflow:ellipsis;}
+  .comp-cell.has-comp{color:var(--text);}
+  .season-badge{color:var(--yellow-dim);}
+  .edited-dot{color:var(--maroon-bright);}
+
+  .pager{display:flex;align-items:center;gap:12px;margin:12px 0;font-size:12px;color:var(--text-dim);flex-wrap:wrap;}
+
+  tr.detail-row td{background:var(--bg-panel);padding:0;border-bottom:1px solid var(--maroon-bright);position:static;}
+  .detail{padding:16px 16px 20px;white-space:normal;cursor:default;}
+  .detail h3{font-family:'Anton', sans-serif;color:var(--yellow);font-size:16px;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px;}
+  .detail .bio{font-size:11px;color:var(--text-dim);margin-bottom:12px;letter-spacing:0.5px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:10px 12px;margin-bottom:12px;}
+  .stat-grid .field label{display:block;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+  .stat-grid .field input{width:100%;}
+  .derived-line{font-size:11px;color:var(--yellow-dim);margin-bottom:12px;}
+
+  .comp-panel{border:1px solid var(--line);background:var(--bg-row);padding:12px;margin-top:6px;}
+  .comp-panel h4{margin:0 0 10px;color:var(--maroon-bright);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:400;}
+  .cand-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;}
+  .cand{
+    border:1px solid var(--line);background:var(--bg-panel);padding:10px 12px;cursor:pointer;
+    font-size:11.5px;line-height:1.5;
+  }
+  .cand:hover{border-color:var(--yellow-dim);}
+  .cand.chosen{border-color:var(--yellow);box-shadow:var(--glow-y);}
+  .cand .cname{color:var(--yellow);font-size:13px;}
+  .cand .cmeta{color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:2px 0 5px;}
+  .cand .csumm{color:var(--text);}
+  .cand .cnotes{color:var(--text-dim);margin-top:4px;}
+  .cand .crank{float:right;color:var(--maroon-bright);}
+  .custom-comp{margin-top:12px;}
+  .comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 12px;}
+  .comp-grid .field label{display:block;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+  .comp-grid .field input, .comp-grid .field textarea{width:100%;}
+  .comp-grid .field.wide{grid-column:1 / -1;}
+  textarea{resize:vertical;min-height:40px;}
+  .detail-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+
+  .empty{padding:44px 18px;text-align:center;color:var(--text-dim);border:1px dashed var(--line);margin:12px 0;font-size:13px;line-height:1.7;}
+
+  /* player page */
+  .pp-head{margin:18px 0 6px;}
+  .pp-head h2{font-family:'Anton', sans-serif;color:var(--yellow);font-size:clamp(22px,5vw,34px);text-transform:uppercase;letter-spacing:1px;margin:0;text-shadow:var(--glow-y);}
+  .pp-bio{font-size:12px;color:var(--text-dim);margin:6px 0 14px;letter-spacing:0.5px;}
+  .pp-section{margin:18px 0;}
+  .pp-section h3{color:var(--maroon-bright);font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:400;margin:0 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+  .season-block{border:1px solid var(--line);background:var(--bg-panel);padding:12px;margin-bottom:14px;}
+  .season-block .sb-title{color:var(--yellow);font-size:14px;margin-bottom:4px;}
+  .season-block .sb-line{font-size:12px;color:var(--text);margin-bottom:8px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(6,2,4,0.85);display:none;align-items:flex-start;justify-content:center;padding:6vh 14px;z-index:50;overflow-y:auto;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--bg-panel);border:1px solid var(--maroon-bright);box-shadow:var(--glow-m);width:100%;max-width:540px;padding:18px 20px 20px;}
+  .modal h2{font-family:'Anton', sans-serif;color:var(--yellow);font-size:19px;letter-spacing:1px;text-transform:uppercase;margin:0 0 12px;}
+  .modal .field{margin-bottom:11px;}
+  .modal .field label{display:block;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+  .modal .field input, .modal .field select{width:100%;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+  .sync-log{background:var(--bg);border:1px solid var(--line);font-size:11px;color:var(--text-dim);padding:10px;height:130px;overflow-y:auto;margin-top:10px;white-space:pre-wrap;}
+  .hint{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.5;}
+
+  footer{margin-top:34px;padding:16px;border-top:1px solid var(--line);font-size:10px;color:var(--text-dim);line-height:1.7;letter-spacing:0.5px;}
+  footer b{color:var(--yellow-dim);font-weight:400;}
+
+  @media (max-width:720px){
+    .filter-row{gap:8px;padding:8px 10px;}
+    .filter-row select, .filter-row input[type=text]{flex:1 1 44%;min-width:120px;}
+    table.board{font-size:11.5px;}
+    .stat-grid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <h1><a href="#/">The Scouting Board</a></h1>
+      <div class="sub">FBS Skill-Position · Player-Season Database · NFL Comparables</div>
+    </div>
+    <div class="stamp" id="stamp">Loading…</div>
+  </header>
+
+  <div class="content" id="app"></div>
+
+  <footer>
+    <b>Data:</b> collegefootballdata.com (CFBD) · verification &amp; comparables referenced from Sports-Reference CFB and Pro-Football-Reference.
+    Comparable stat lines are approximate. Personal, non-commercial project. Edits and comp choices are saved in this browser only (localStorage).
+  </footer>
+</div>
+
+<!-- Manual row modal -->
+<div class="overlay" id="manualOverlay">
+  <div class="modal">
+    <h2>Add Manual Player-Season</h2>
+    <div class="field"><label>Full name</label><input type="text" id="mName"></div>
+    <div class="field"><label>School</label><input type="text" id="mSchool"></div>
+    <div class="field"><label>Conference</label><input type="text" id="mConf" placeholder="e.g., SEC"></div>
+    <div class="field"><label>Position</label>
+      <select id="mPos"><option>QB</option><option>RB</option><option>WR</option><option>TE</option><option>ATH</option></select></div>
+    <div class="field"><label>Class year</label>
+      <select id="mClass"><option>FR</option><option>SO</option><option>JR</option><option>SR</option><option>GR</option></select></div>
+    <div class="field"><label>Season year</label><input type="number" id="mSeason" min="2000" max="2035"></div>
+    <div class="modal-actions">
+      <button class="btn gold" id="manualCancel">Cancel</button>
+      <button class="btn" id="manualSave">Add Row</button>
+    </div>
+  </div>
+</div>
+
+<!-- Live refresh modal -->
+<div class="overlay" id="refreshOverlay">
+  <div class="modal">
+    <h2>Refresh Now (Live)</h2>
+    <div class="hint" style="margin-bottom:10px;">
+      Pulls current-season stats through your proxy for the conferences already loaded on this page,
+      and layers them over the built data until the next weekly rebuild. New players appear after the
+      weekly GitHub Action run, not here.
+    </div>
+    <div class="field"><label>Proxy base URL</label>
+      <input type="text" id="proxyInput" placeholder="https://your-worker.your-name.workers.dev">
+      <div class="hint">Your Cloudflare Worker URL (holds the CFBD key). Saved in this browser.</div>
+    </div>
+    <div class="sync-log" id="refreshLog">Ready.</div>
+    <div class="modal-actions">
+      <button class="btn gold" id="refreshCancel">Close</button>
+      <button class="btn" id="refreshRun">Run Refresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const DATA_DIR = 'data';               // where the pipeline writes JSON
+const PAGE_SIZE = 100;                 // rows per page (keeps the board calm)
+const LS_KEY = 'sb_overlay_v1';        // localStorage overlay
+const LS_PROXY = 'sb_proxy_base';
+
+const POSITIONS = ['QB','RB','WR','TE','ATH'];
+const POS_ORDER = {QB:0,RB:1,WR:2,TE:3,ATH:4};
+const CSV_COLUMNS = ['player_id','full_name','espn_id','school','conference','position','class_year','height_in','weight_lb','hometown','season_year','games_played','games_started','pass_att','pass_comp','pass_cmp_pct','pass_yds','pass_td','pass_int','pass_yds_per_att','passer_rating','rush_att','rush_yds','rush_td','rush_yds_per_att','rec','rec_yds','rec_td','rec_yds_per_rec','nfl_comparable_name','nfl_comparable_position','nfl_comparable_college','nfl_comparable_college_season_year','nfl_comparable_college_stats_summary','similarity_notes','data_status'];
+const TABLE_COLS = {
+  QB: [['pass_comp','CMP'],['pass_att','ATT'],['pass_cmp_pct','CMP%'],['pass_yds','P.YDS'],['pass_td','P.TD'],['pass_int','INT'],['passer_rating','RTG'],['rush_yds','RU.Y'],['rush_td','RU.TD']],
+  RB: [['rush_att','ATT'],['rush_yds','YDS'],['rush_yds_per_att','Y/A'],['rush_td','TD'],['rec','REC'],['rec_yds','R.YDS'],['rec_td','R.TD']],
+  WR: [['rec','REC'],['rec_yds','YDS'],['rec_yds_per_rec','Y/R'],['rec_td','TD'],['rush_yds','RU.Y'],['rush_td','RU.TD']],
+  TE: [['rec','REC'],['rec_yds','YDS'],['rec_yds_per_rec','Y/R'],['rec_td','TD']],
+  ATH:[['rec','REC'],['rec_yds','YDS'],['rec_td','TD'],['rush_att','RU.A'],['rush_yds','RU.Y'],['rush_td','RU.TD']]
+};
+const EDIT_FIELDS = {
+  QB:['games_played','games_started','pass_att','pass_comp','pass_yds','pass_td','pass_int','rush_att','rush_yds','rush_td'],
+  RB:['games_played','games_started','rush_att','rush_yds','rush_td','rec','rec_yds','rec_td'],
+  WR:['games_played','games_started','rec','rec_yds','rec_td','rush_att','rush_yds','rush_td'],
+  TE:['games_played','games_started','rec','rec_yds','rec_td'],
+  ATH:['games_played','games_started','rec','rec_yds','rec_td','rush_att','rush_yds','rush_td']
+};
+const FIELD_LABELS = {games_played:'G',games_started:'GS',pass_att:'Pass Att',pass_comp:'Pass Comp',pass_yds:'Pass Yds',pass_td:'Pass TD',pass_int:'INT',rush_att:'Rush Att',rush_yds:'Rush Yds',rush_td:'Rush TD',rec:'Rec',rec_yds:'Rec Yds',rec_td:'Rec TD'};
+const COMP_FEATURES = {
+  QB:[['pass_yds',1500],['pass_td',15],['pass_int',6],['pass_cmp_pct',8],['rush_yds',400],['rush_td',6]],
+  RB:[['rush_att',90],['rush_yds',600],['rush_td',8],['rec',18],['rec_yds',200]],
+  WR:[['rec',30],['rec_yds',450],['rec_td',7],['rush_yds',120]],
+  TE:[['rec',18],['rec_yds',250],['rec_td',4]]
+};
+
+/* Fallback EXAMPLE data — shown only when data/manifest.json is unavailable
+   (fresh clone before first pipeline run, or opened via file://). Fictional. */
+const EXAMPLE = {
+  players:{
+    'EX_QB_001':{player_id:'EX_QB_001',full_name:'Example QB Alpha',espn_id:'',school:'Sample State',conference:'EXAMPLE',position:'QB',class_year:'JR',height_in:75,weight_lb:215,hometown:'Springfield, TX'},
+    'EX_RB_001':{player_id:'EX_RB_001',full_name:'Example RB Delta',espn_id:'',school:'Sample State',conference:'EXAMPLE',position:'RB',class_year:'SR',height_in:71,weight_lb:218,hometown:'Macon, GA'},
+    'EX_WR_001':{player_id:'EX_WR_001',full_name:'Example WR Golf',espn_id:'',school:'Sample State',conference:'EXAMPLE',position:'WR',class_year:'SO',height_in:73,weight_lb:195,hometown:'Katy, TX'},
+    'EX_TE_001':{player_id:'EX_TE_001',full_name:'Example TE Juliet',espn_id:'',school:'Sample State',conference:'EXAMPLE',position:'TE',class_year:'JR',height_in:77,weight_lb:245,hometown:'Naperville, IL'}
+  },
+  seasons:[
+    {player_id:'EX_QB_001',full_name:'Example QB Alpha',school:'Sample State',conference:'EXAMPLE',position:'QB',class_year:'JR',season_year:2025,games_played:13,games_started:13,pass_att:480,pass_comp:330,pass_yds:4100,pass_td:38,pass_int:7,rush_att:95,rush_yds:520,rush_td:8,data_status:'EXAMPLE'},
+    {player_id:'EX_QB_001',full_name:'Example QB Alpha',school:'Sample State',conference:'EXAMPLE',position:'QB',class_year:'SO',season_year:2024,games_played:12,games_started:10,pass_att:395,pass_comp:255,pass_yds:3050,pass_td:24,pass_int:9,rush_att:80,rush_yds:410,rush_td:5,data_status:'EXAMPLE'},
+    {player_id:'EX_RB_001',full_name:'Example RB Delta',school:'Sample State',conference:'EXAMPLE',position:'RB',class_year:'SR',season_year:2025,games_played:13,games_started:13,rush_att:270,rush_yds:1650,rush_td:19,rec:28,rec_yds:290,rec_td:2,data_status:'EXAMPLE'},
+    {player_id:'EX_WR_001',full_name:'Example WR Golf',school:'Sample State',conference:'EXAMPLE',position:'WR',class_year:'SO',season_year:2025,games_played:12,games_started:12,rec:78,rec_yds:1240,rec_td:12,rush_att:6,rush_yds:55,rush_td:1,data_status:'EXAMPLE'},
+    {player_id:'EX_TE_001',full_name:'Example TE Juliet',school:'Sample State',conference:'EXAMPLE',position:'TE',class_year:'JR',season_year:2025,games_played:13,games_started:11,rec:52,rec_yds:640,rec_td:6,data_status:'EXAMPLE'}
+  ]
+};
+
+/* Embedded fallback comp library (kept in sync with data/comp_library.json;
+   the fetched file wins when available) */
+const FALLBACK_LIB = [{"name":"Joe Burrow","pos":"QB","college":"LSU","year":2019,"s":{"pass_yds":5671,"pass_td":60,"pass_int":6,"pass_cmp_pct":76,"rush_yds":368,"rush_td":5},"profile":"elite-volume pocket passer, historic efficiency"},{"name":"Baker Mayfield","pos":"QB","college":"Oklahoma","year":2017,"s":{"pass_yds":4627,"pass_td":43,"pass_int":6,"pass_cmp_pct":70,"rush_yds":311,"rush_td":5},"profile":"high-efficiency rhythm passer, big-play offense"},{"name":"Jayden Daniels","pos":"QB","college":"LSU","year":2023,"s":{"pass_yds":3812,"pass_td":40,"pass_int":4,"pass_cmp_pct":72,"rush_yds":1134,"rush_td":10},"profile":"true dual-threat, elite rushing production"},{"name":"Lamar Jackson","pos":"QB","college":"Louisville","year":2016,"s":{"pass_yds":3543,"pass_td":30,"pass_int":9,"pass_cmp_pct":56,"rush_yds":1571,"rush_td":21},"profile":"run-first dynamic playmaker"},{"name":"Marcus Mariota","pos":"QB","college":"Oregon","year":2014,"s":{"pass_yds":4454,"pass_td":42,"pass_int":4,"pass_cmp_pct":68,"rush_yds":770,"rush_td":15},"profile":"efficient spread dual-threat"},{"name":"Deshaun Watson","pos":"QB","college":"Clemson","year":2016,"s":{"pass_yds":4593,"pass_td":41,"pass_int":17,"pass_cmp_pct":67,"rush_yds":629,"rush_td":9},"profile":"high-volume dual-threat, aggressive downfield"},{"name":"Mac Jones","pos":"QB","college":"Alabama","year":2020,"s":{"pass_yds":4500,"pass_td":41,"pass_int":4,"pass_cmp_pct":77,"rush_yds":14,"rush_td":1},"profile":"pure pocket distributor, elite accuracy, loaded offense"},{"name":"Kenny Pickett","pos":"QB","college":"Pittsburgh","year":2021,"s":{"pass_yds":4319,"pass_td":42,"pass_int":7,"pass_cmp_pct":67,"rush_yds":241,"rush_td":5},"profile":"late-breakout high-volume starter"},{"name":"Sam Bradford","pos":"QB","college":"Oklahoma","year":2008,"s":{"pass_yds":4720,"pass_td":50,"pass_int":8,"pass_cmp_pct":68,"rush_yds":47,"rush_td":5},"profile":"huge-volume pocket passer in explosive offense"},{"name":"Brock Purdy","pos":"QB","college":"Iowa State","year":2020,"s":{"pass_yds":2750,"pass_td":19,"pass_int":9,"pass_cmp_pct":66,"rush_yds":382,"rush_td":8},"profile":"moderate-volume efficient game manager"},{"name":"Caleb Williams","pos":"QB","college":"USC","year":2022,"s":{"pass_yds":4537,"pass_td":42,"pass_int":5,"pass_cmp_pct":66,"rush_yds":382,"rush_td":10},"profile":"creative playmaker, high TD volume, off-script ability"},{"name":"C.J. Stroud","pos":"QB","college":"Ohio State","year":2022,"s":{"pass_yds":3688,"pass_td":41,"pass_int":6,"pass_cmp_pct":66,"rush_yds":108,"rush_td":1},"profile":"precision pocket passer, elite TD:INT"},{"name":"Justin Herbert","pos":"QB","college":"Oregon","year":2019,"s":{"pass_yds":3471,"pass_td":32,"pass_int":6,"pass_cmp_pct":67,"rush_yds":50,"rush_td":4},"profile":"big-arm pro-style starter, moderate college volume"},{"name":"Tua Tagovailoa","pos":"QB","college":"Alabama","year":2018,"s":{"pass_yds":3966,"pass_td":43,"pass_int":6,"pass_cmp_pct":69,"rush_yds":190,"rush_td":5},"profile":"elite-efficiency lefty distributor in loaded offense"},{"name":"Kyler Murray","pos":"QB","college":"Oklahoma","year":2018,"s":{"pass_yds":4361,"pass_td":42,"pass_int":7,"pass_cmp_pct":69,"rush_yds":1001,"rush_td":12},"profile":"electric dual-threat, 4,000/1,000 season"},{"name":"Jalen Hurts","pos":"QB","college":"Oklahoma","year":2019,"s":{"pass_yds":3851,"pass_td":32,"pass_int":8,"pass_cmp_pct":70,"rush_yds":1298,"rush_td":20},"profile":"power dual-threat, huge rushing TD output"},{"name":"Trevor Lawrence","pos":"QB","college":"Clemson","year":2020,"s":{"pass_yds":3153,"pass_td":24,"pass_int":5,"pass_cmp_pct":69,"rush_yds":203,"rush_td":8},"profile":"efficient franchise-type in shortened season"},{"name":"Josh Allen","pos":"QB","college":"Wyoming","year":2016,"s":{"pass_yds":3203,"pass_td":28,"pass_int":15,"pass_cmp_pct":56,"rush_yds":523,"rush_td":7},"profile":"raw big-arm G5 dual-threat, high INT volume"},{"name":"Patrick Mahomes","pos":"QB","college":"Texas Tech","year":2016,"s":{"pass_yds":5052,"pass_td":41,"pass_int":10,"pass_cmp_pct":66,"rush_yds":285,"rush_td":12},"profile":"air-raid volume monster, playmaking arm"},{"name":"Bo Nix","pos":"QB","college":"Oregon","year":2023,"s":{"pass_yds":4508,"pass_td":45,"pass_int":3,"pass_cmp_pct":77,"rush_yds":234,"rush_td":6},"profile":"veteran hyper-accurate distributor, quick game"},{"name":"Michael Penix Jr.","pos":"QB","college":"Washington","year":2023,"s":{"pass_yds":4903,"pass_td":36,"pass_int":11,"pass_cmp_pct":65,"rush_yds":8,"rush_td":3},"profile":"vertical high-volume passer, deep-ball driven"},{"name":"Jordan Love","pos":"QB","college":"Utah State","year":2018,"s":{"pass_yds":3567,"pass_td":32,"pass_int":6,"pass_cmp_pct":64,"rush_yds":183,"rush_td":7},"profile":"G5 traits passer, strong efficiency year"},{"name":"Zach Wilson","pos":"QB","college":"BYU","year":2020,"s":{"pass_yds":3692,"pass_td":33,"pass_int":3,"pass_cmp_pct":74,"rush_yds":254,"rush_td":10},"profile":"breakout efficiency season, off-platform throws"},{"name":"Drake Maye","pos":"QB","college":"North Carolina","year":2022,"s":{"pass_yds":4321,"pass_td":38,"pass_int":7,"pass_cmp_pct":66,"rush_yds":698,"rush_td":7},"profile":"big-frame dual-threat, high volume as first-year starter"},{"name":"Cam Newton","pos":"QB","college":"Auburn","year":2010,"s":{"pass_yds":2854,"pass_td":30,"pass_int":7,"pass_cmp_pct":66,"rush_yds":1473,"rush_td":20},"profile":"physically dominant runner-passer, title-season profile"},{"name":"Robert Griffin III","pos":"QB","college":"Baylor","year":2011,"s":{"pass_yds":4293,"pass_td":37,"pass_int":6,"pass_cmp_pct":72,"rush_yds":699,"rush_td":10},"profile":"explosive spread dual-threat, elite efficiency"},{"name":"Andrew Luck","pos":"QB","college":"Stanford","year":2011,"s":{"pass_yds":3517,"pass_td":37,"pass_int":10,"pass_cmp_pct":71,"rush_yds":150,"rush_td":2},"profile":"pro-ready pocket technician"},{"name":"Russell Wilson","pos":"QB","college":"Wisconsin","year":2011,"s":{"pass_yds":3175,"pass_td":33,"pass_int":4,"pass_cmp_pct":73,"rush_yds":338,"rush_td":6},"profile":"hyper-efficient veteran transfer, moderate volume"},{"name":"Dak Prescott","pos":"QB","college":"Mississippi State","year":2014,"s":{"pass_yds":3449,"pass_td":27,"pass_int":11,"pass_cmp_pct":61,"rush_yds":986,"rush_td":14},"profile":"power-run dual-threat, SEC volume"},{"name":"Geno Smith","pos":"QB","college":"West Virginia","year":2012,"s":{"pass_yds":4205,"pass_td":42,"pass_int":6,"pass_cmp_pct":71,"rush_yds":151,"rush_td":2},"profile":"air-raid volume with elite TD:INT"},{"name":"Jonathan Taylor","pos":"RB","college":"Wisconsin","year":2019,"s":{"rush_att":320,"rush_yds":2003,"rush_td":21,"rec":26,"rec_yds":252,"rec_td":5},"profile":"bell-cow workhorse, 2,000-yard volume"},{"name":"Derrick Henry","pos":"RB","college":"Alabama","year":2015,"s":{"rush_att":395,"rush_yds":2219,"rush_td":28,"rec":11,"rec_yds":91,"rec_td":0},"profile":"extreme-volume power back"},{"name":"Saquon Barkley","pos":"RB","college":"Penn State","year":2017,"s":{"rush_att":217,"rush_yds":1271,"rush_td":18,"rec":54,"rec_yds":632,"rec_td":3},"profile":"explosive three-down back, heavy receiving role"},{"name":"Christian McCaffrey","pos":"RB","college":"Stanford","year":2015,"s":{"rush_att":337,"rush_yds":2019,"rush_td":8,"rec":45,"rec_yds":645,"rec_td":5},"profile":"all-purpose volume monster"},{"name":"Bijan Robinson","pos":"RB","college":"Texas","year":2022,"s":{"rush_att":258,"rush_yds":1580,"rush_td":18,"rec":19,"rec_yds":314,"rec_td":2},"profile":"high-efficiency lead back, big-play ability"},{"name":"Alvin Kamara","pos":"RB","college":"Tennessee","year":2016,"s":{"rush_att":103,"rush_yds":596,"rush_td":9,"rec":40,"rec_yds":392,"rec_td":4},"profile":"low-volume committee back, receiving specialist"},{"name":"Jahmyr Gibbs","pos":"RB","college":"Alabama","year":2022,"s":{"rush_att":151,"rush_yds":926,"rush_td":7,"rec":44,"rec_yds":444,"rec_td":3},"profile":"space back, split backfield, pass-game weapon"},{"name":"Ezekiel Elliott","pos":"RB","college":"Ohio State","year":2015,"s":{"rush_att":289,"rush_yds":1821,"rush_td":23,"rec":27,"rec_yds":206,"rec_td":0},"profile":"classic feature back behind elite line"},{"name":"Ashton Jeanty","pos":"RB","college":"Boise State","year":2024,"s":{"rush_att":374,"rush_yds":2601,"rush_td":29,"rec":23,"rec_yds":138,"rec_td":1},"profile":"historic single-season volume, G5 bell cow"},{"name":"Breece Hall","pos":"RB","college":"Iowa State","year":2021,"s":{"rush_att":253,"rush_yds":1472,"rush_td":20,"rec":36,"rec_yds":302,"rec_td":3},"profile":"complete three-down producer, TD machine"},{"name":"Kenneth Walker III","pos":"RB","college":"Michigan State","year":2021,"s":{"rush_att":263,"rush_yds":1636,"rush_td":18,"rec":13,"rec_yds":89,"rec_td":1},"profile":"contact-balance runner, minimal receiving usage"},{"name":"Najee Harris","pos":"RB","college":"Alabama","year":2020,"s":{"rush_att":251,"rush_yds":1466,"rush_td":26,"rec":43,"rec_yds":425,"rec_td":4},"profile":"goal-line volume plus real receiving role"},{"name":"Travis Etienne","pos":"RB","college":"Clemson","year":2018,"s":{"rush_att":204,"rush_yds":1658,"rush_td":24,"rec":12,"rec_yds":78,"rec_td":2},"profile":"explosive per-carry efficiency, 8+ Y/A"},{"name":"Nick Chubb","pos":"RB","college":"Georgia","year":2014,"s":{"rush_att":219,"rush_yds":1547,"rush_td":14,"rec":18,"rec_yds":213,"rec_td":2},"profile":"downhill efficiency as freshman feature back"},{"name":"Dalvin Cook","pos":"RB","college":"Florida State","year":2016,"s":{"rush_att":288,"rush_yds":1765,"rush_td":19,"rec":33,"rec_yds":488,"rec_td":1},"profile":"feature volume plus passing-down value"},{"name":"Melvin Gordon","pos":"RB","college":"Wisconsin","year":2014,"s":{"rush_att":343,"rush_yds":2587,"rush_td":29,"rec":19,"rec_yds":153,"rec_td":3},"profile":"gigantic volume season, big-play runner"},{"name":"Leonard Fournette","pos":"RB","college":"LSU","year":2015,"s":{"rush_att":300,"rush_yds":1953,"rush_td":22,"rec":19,"rec_yds":253,"rec_td":1},"profile":"power feature back, SEC workload"},{"name":"Josh Jacobs","pos":"RB","college":"Alabama","year":2018,"s":{"rush_att":120,"rush_yds":640,"rush_td":11,"rec":20,"rec_yds":247,"rec_td":3},"profile":"low-volume committee back, high TD efficiency"},{"name":"Aaron Jones","pos":"RB","college":"UTEP","year":2016,"s":{"rush_att":229,"rush_yds":1773,"rush_td":17,"rec":28,"rec_yds":233,"rec_td":3},"profile":"G5 workhorse with receiving chops"},{"name":"De'Von Achane","pos":"RB","college":"Texas A&M","year":2022,"s":{"rush_att":196,"rush_yds":1102,"rush_td":8,"rec":36,"rec_yds":383,"rec_td":3},"profile":"speed back, moderate volume, pass-game usage"},{"name":"D'Andre Swift","pos":"RB","college":"Georgia","year":2019,"s":{"rush_att":196,"rush_yds":1218,"rush_td":7,"rec":24,"rec_yds":216,"rec_td":1},"profile":"efficient split-backfield lead, receiving value"},{"name":"James Cook","pos":"RB","college":"Georgia","year":2021,"s":{"rush_att":113,"rush_yds":728,"rush_td":7,"rec":27,"rec_yds":284,"rec_td":4},"profile":"satellite back in committee, per-touch juice"},{"name":"Kyren Williams","pos":"RB","college":"Notre Dame","year":2021,"s":{"rush_att":204,"rush_yds":1002,"rush_td":14,"rec":42,"rec_yds":359,"rec_td":3},"profile":"three-down volume, heavy receiving usage"},{"name":"Rachaad White","pos":"RB","college":"Arizona State","year":2021,"s":{"rush_att":182,"rush_yds":1006,"rush_td":15,"rec":43,"rec_yds":456,"rec_td":1},"profile":"pass-catching lead back, red-zone role"},{"name":"Devin Singletary","pos":"RB","college":"FAU","year":2017,"s":{"rush_att":301,"rush_yds":1920,"rush_td":32,"rec":19,"rec_yds":198,"rec_td":1},"profile":"G5 volume monster, outlier TD total"},{"name":"Ja'Marr Chase","pos":"WR","college":"LSU","year":2019,"s":{"rec":84,"rec_yds":1780,"rec_td":20,"rush_yds":0,"rush_td":0},"profile":"alpha X receiver, elite yards-per-catch and TD rate"},{"name":"Justin Jefferson","pos":"WR","college":"LSU","year":2019,"s":{"rec":111,"rec_yds":1540,"rec_td":18,"rush_yds":0,"rush_td":0},"profile":"huge-volume slot/route technician"},{"name":"DeVonta Smith","pos":"WR","college":"Alabama","year":2020,"s":{"rec":117,"rec_yds":1856,"rec_td":23,"rush_yds":24,"rush_td":1},"profile":"target-dominant Heisman-level producer"},{"name":"Marvin Harrison Jr.","pos":"WR","college":"Ohio State","year":2023,"s":{"rec":67,"rec_yds":1211,"rec_td":14,"rush_yds":0,"rush_td":0},"profile":"moderate-volume, high-efficiency outside WR"},{"name":"Davante Adams","pos":"WR","college":"Fresno State","year":2013,"s":{"rec":131,"rec_yds":1719,"rec_td":24,"rush_yds":0,"rush_td":0},"profile":"extreme target volume in pass-heavy G5 offense"},{"name":"CeeDee Lamb","pos":"WR","college":"Oklahoma","year":2019,"s":{"rec":62,"rec_yds":1327,"rec_td":14,"rush_yds":0,"rush_td":0},"profile":"big-play YAC receiver, 20+ yds/catch"},{"name":"Amon-Ra St. Brown","pos":"WR","college":"USC","year":2019,"s":{"rec":77,"rec_yds":1042,"rec_td":6,"rush_yds":0,"rush_td":0},"profile":"high-catch slot possession profile"},{"name":"Puka Nacua","pos":"WR","college":"BYU","year":2022,"s":{"rec":48,"rec_yds":625,"rec_td":5,"rush_yds":191,"rush_td":5},"profile":"modest college volume, gadget rushing usage"},{"name":"Malik Nabers","pos":"WR","college":"LSU","year":2023,"s":{"rec":89,"rec_yds":1569,"rec_td":14,"rush_yds":0,"rush_td":0},"profile":"target-dominant alpha, elite volume and efficiency"},{"name":"Rome Odunze","pos":"WR","college":"Washington","year":2023,"s":{"rec":92,"rec_yds":1640,"rec_td":13,"rush_yds":0,"rush_td":0},"profile":"contested-catch X, huge vertical volume"},{"name":"Amari Cooper","pos":"WR","college":"Alabama","year":2014,"s":{"rec":124,"rec_yds":1727,"rec_td":16,"rush_yds":0,"rush_td":0},"profile":"route-running target hog, award-season volume"},{"name":"Tee Higgins","pos":"WR","college":"Clemson","year":2019,"s":{"rec":59,"rec_yds":1167,"rec_td":13,"rush_yds":0,"rush_td":0},"profile":"big-bodied vertical threat, ~20 yds/catch"},{"name":"A.J. Brown","pos":"WR","college":"Ole Miss","year":2018,"s":{"rec":85,"rec_yds":1320,"rec_td":6,"rush_yds":0,"rush_td":0},"profile":"physical slot volume, YAC-driven"},{"name":"Deebo Samuel","pos":"WR","college":"South Carolina","year":2018,"s":{"rec":62,"rec_yds":882,"rec_td":11,"rush_yds":0,"rush_td":2},"profile":"hybrid weapon, gadget rushing and return value"},{"name":"Garrett Wilson","pos":"WR","college":"Ohio State","year":2021,"s":{"rec":70,"rec_yds":1058,"rec_td":12,"rush_yds":0,"rush_td":0},"profile":"polished separator in loaded WR room"},{"name":"Chris Olave","pos":"WR","college":"Ohio State","year":2021,"s":{"rec":65,"rec_yds":936,"rec_td":13,"rush_yds":0,"rush_td":0},"profile":"vertical route technician, high TD rate"},{"name":"Drake London","pos":"WR","college":"USC","year":2021,"s":{"rec":88,"rec_yds":1084,"rec_td":7,"rush_yds":0,"rush_td":0},"profile":"jumbo target-per-game monster, partial season"},{"name":"Jameson Williams","pos":"WR","college":"Alabama","year":2021,"s":{"rec":79,"rec_yds":1572,"rec_td":15,"rush_yds":0,"rush_td":0},"profile":"field-stretching deep threat, ~20 yds/catch"},{"name":"Jaxon Smith-Njigba","pos":"WR","college":"Ohio State","year":2021,"s":{"rec":95,"rec_yds":1606,"rec_td":9,"rush_yds":0,"rush_td":0},"profile":"slot volume machine, chain mover"},{"name":"Tank Dell","pos":"WR","college":"Houston","year":2022,"s":{"rec":109,"rec_yds":1398,"rec_td":17,"rush_yds":0,"rush_td":0},"profile":"small-frame G5 target dominator"},{"name":"Zay Flowers","pos":"WR","college":"Boston College","year":2022,"s":{"rec":78,"rec_yds":1077,"rec_td":12,"rush_yds":0,"rush_td":0},"profile":"team-carrying separator on weak offense"},{"name":"Jordan Addison","pos":"WR","college":"Pittsburgh","year":2021,"s":{"rec":100,"rec_yds":1593,"rec_td":17,"rush_yds":0,"rush_td":0},"profile":"Biletnikoff-level volume and TD production"},{"name":"Michael Crabtree","pos":"WR","college":"Texas Tech","year":2007,"s":{"rec":134,"rec_yds":1962,"rec_td":22,"rush_yds":0,"rush_td":0},"profile":"air-raid record-setting target volume"},{"name":"Larry Fitzgerald","pos":"WR","college":"Pittsburgh","year":2003,"s":{"rec":92,"rec_yds":1672,"rec_td":22,"rush_yds":0,"rush_td":0},"profile":"dominant contested-catch alpha, award season"},{"name":"Stefon Diggs","pos":"WR","college":"Maryland","year":2014,"s":{"rec":62,"rec_yds":792,"rec_td":5,"rush_yds":0,"rush_td":0},"profile":"moderate college volume, traits over production"},{"name":"Brandon Aiyuk","pos":"WR","college":"Arizona State","year":2019,"s":{"rec":65,"rec_yds":1192,"rec_td":8,"rush_yds":0,"rush_td":0},"profile":"big-play YAC profile, 18+ yds/catch"},{"name":"Ladd McConkey","pos":"WR","college":"Georgia","year":2022,"s":{"rec":58,"rec_yds":762,"rec_td":7,"rush_yds":83,"rush_td":2},"profile":"slot separator with gadget usage in run-first offense"},{"name":"DK Metcalf","pos":"WR","college":"Ole Miss","year":2018,"s":{"rec":26,"rec_yds":569,"rec_td":5,"rush_yds":0,"rush_td":0},"profile":"injury-shortened season, elite per-catch traits"},{"name":"Jaylen Waddle","pos":"WR","college":"Alabama","year":2020,"s":{"rec":28,"rec_yds":591,"rec_td":4,"rush_yds":0,"rush_td":0},"profile":"injury-shortened season, explosive per-touch profile"},{"name":"Brock Bowers","pos":"TE","college":"Georgia","year":2022,"s":{"rec":63,"rec_yds":942,"rec_td":7},"profile":"featured move TE, WR-like usage"},{"name":"Kyle Pitts","pos":"TE","college":"Florida","year":2020,"s":{"rec":43,"rec_yds":770,"rec_td":12},"profile":"vertical mismatch seam threat, elite TD rate"},{"name":"T.J. Hockenson","pos":"TE","college":"Iowa","year":2018,"s":{"rec":49,"rec_yds":760,"rec_td":6},"profile":"complete in-line Y, moderate volume"},{"name":"Mark Andrews","pos":"TE","college":"Oklahoma","year":2017,"s":{"rec":62,"rec_yds":958,"rec_td":8},"profile":"big-slot receiving TE in explosive offense"},{"name":"George Kittle","pos":"TE","college":"Iowa","year":2016,"s":{"rec":22,"rec_yds":314,"rec_td":4},"profile":"low college volume, blocking-first usage"},{"name":"Sam LaPorta","pos":"TE","college":"Iowa","year":2022,"s":{"rec":58,"rec_yds":657,"rec_td":1},"profile":"target hog in low-scoring offense"},{"name":"Trey McBride","pos":"TE","college":"Colorado State","year":2021,"s":{"rec":90,"rec_yds":1121,"rec_td":1},"profile":"G5 target monster, zero red-zone luck"},{"name":"Dalton Kincaid","pos":"TE","college":"Utah","year":2022,"s":{"rec":70,"rec_yds":890,"rec_td":8},"profile":"big-slot receiving specialist"},{"name":"Pat Freiermuth","pos":"TE","college":"Penn State","year":2019,"s":{"rec":43,"rec_yds":507,"rec_td":7},"profile":"red-zone Y, moderate volume"},{"name":"Evan Engram","pos":"TE","college":"Ole Miss","year":2016,"s":{"rec":65,"rec_yds":926,"rec_td":8},"profile":"oversized-WR movement TE"},{"name":"David Njoku","pos":"TE","college":"Miami","year":2016,"s":{"rec":43,"rec_yds":698,"rec_td":8},"profile":"athletic seam threat, 16+ yds/catch"},{"name":"Jake Ferguson","pos":"TE","college":"Wisconsin","year":2021,"s":{"rec":46,"rec_yds":450,"rec_td":3},"profile":"possession Y in run-heavy offense"},{"name":"Michael Mayer","pos":"TE","college":"Notre Dame","year":2022,"s":{"rec":67,"rec_yds":809,"rec_td":9},"profile":"featured in-line target hog"},{"name":"Cole Kmet","pos":"TE","college":"Notre Dame","year":2019,"s":{"rec":43,"rec_yds":515,"rec_td":6},"profile":"one-year producer, classic Y frame"},{"name":"Tyler Warren","pos":"TE","college":"Penn State","year":2024,"s":{"rec":104,"rec_yds":1233,"rec_td":8},"profile":"offense-hub TE, historic target volume"},{"name":"Colston Loveland","pos":"TE","college":"Michigan","year":2023,"s":{"rec":45,"rec_yds":649,"rec_td":4},"profile":"move TE efficiency in run-first title offense"},{"name":"Isaiah Likely","pos":"TE","college":"Coastal Carolina","year":2021,"s":{"rec":59,"rec_yds":912,"rec_td":12},"profile":"G5 vertical seam threat, 15+ yds/catch"}];
+
+/* ================= STATE ================= */
+let manifest = null;              // data/manifest.json or null
+let compLib = [];                 // data/comp_library.json entries
+let loadedConfs = {};             // slug -> {players, seasons[]}
+let selectedConfs = [];           // slugs currently shown
+let overlay = loadOverlay();      // localStorage layer
+let activeTab = 'ALL';
+let seasonFilterVal = '', searchQuery = '', needsCompOnly = false;
+let page = 0;
+let expandedKey = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => { const d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; };
+const key = (pid,yr) => pid+'|'+yr;
+
+function loadOverlay(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY)) || {} }catch(e){ return {}; }
+}
+function ovl(){
+  overlay.edits ||= {}; overlay.comps ||= {}; overlay.deleted ||= {};
+  overlay.manual ||= {players:{},seasons:{}};
+  overlay.live ||= {seasons:{},updated:null};
+  return overlay;
+}
+function saveOverlay(){ localStorage.setItem(LS_KEY, JSON.stringify(ovl())); }
+
+/* ================= DATA ASSEMBLY ================= */
+function allPlayers(){
+  const out = {...ovl().manual.players};
+  for(const slug of selectedConfs){
+    const c = loadedConfs[slug]; if(!c) continue;
+    Object.assign(out, c.players);
+  }
+  if(!manifest) Object.assign(out, EXAMPLE.players);
+  return out;
+}
+function allSeasonRows(){
+  const rows = {};
+  const push = r => { rows[key(r.player_id,r.season_year)] = {...r}; };
+  if(!manifest) EXAMPLE.seasons.forEach(push);
+  for(const slug of selectedConfs){
+    const c = loadedConfs[slug]; if(!c) continue;
+    c.seasons.forEach(push);
+  }
+  Object.values(ovl().manual.seasons).forEach(push);
+  // live layer, then manual edits, then deletions
+  const o = ovl();
+  for(const [k,fields] of Object.entries(o.live.seasons)){
+    if(rows[k]) Object.assign(rows[k], fields, {data_status:'LIVE_REFRESH'});
+  }
+  for(const [k,fields] of Object.entries(o.edits)){
+    if(rows[k]) Object.assign(rows[k], fields, {data_status:(rows[k].data_status||'')+'*'});
+  }
+  for(const k of Object.keys(o.deleted)) delete rows[k];
+  return rows;
+}
+function derive(r){
+  const n=k=>Number(r[k]||0); const out={...r};
+  out.pass_cmp_pct = n('pass_att') ? +(100*n('pass_comp')/n('pass_att')).toFixed(1) : '';
+  out.pass_yds_per_att = n('pass_att') ? +(n('pass_yds')/n('pass_att')).toFixed(2) : '';
+  out.passer_rating = n('pass_att') ? +(((8.4*n('pass_yds'))+(330*n('pass_td'))-(200*n('pass_int'))+(100*n('pass_comp')))/n('pass_att')).toFixed(1) : '';
+  out.rush_yds_per_att = n('rush_att') ? +(n('rush_yds')/n('rush_att')).toFixed(2) : '';
+  out.rec_yds_per_rec = n('rec') ? +(n('rec_yds')/n('rec')).toFixed(2) : '';
+  return out;
+}
+
+/* ================= COMPS ================= */
+function compSummary(c){
+  const s=c.s,parts=[];
+  if(s.pass_yds) parts.push(`~${Number(s.pass_yds).toLocaleString()} pass yds, ${s.pass_td} TD, ${s.pass_int} INT, ${s.pass_cmp_pct}% cmp`);
+  if(s.rush_yds && (c.pos==='QB'||c.pos==='RB')) parts.push(`~${s.rush_yds} rush yds${s.rush_td?`, ${s.rush_td} rush TD`:''}${s.rush_att?` on ${s.rush_att} att`:''}`);
+  if(s.rec) parts.push(`~${s.rec} rec, ${s.rec_yds} yds, ${s.rec_td||0} TD`);
+  return parts.join('; ')+' (approx.)';
+}
+function topComps(row, k=3){
+  const pos = row.position==='ATH' ? 'WR' : row.position;
+  const feats = COMP_FEATURES[pos]; if(!feats||!compLib.length) return [];
+  const d = derive(row);
+  const scored=[];
+  compLib.filter(c=>c.pos===pos).forEach(c=>{
+    let score=0,used=0;
+    feats.forEach(([f,scale])=>{
+      const a=Number(d[f]||0), b=Number(c.s[f]||0);
+      if(a===0&&b===0) return;
+      score+=Math.pow((a-b)/scale,2); used++;
+    });
+    if(used) scored.push([score/used,c]);
+  });
+  scored.sort((x,y)=>x[0]-y[0]);
+  return scored.slice(0,k).map(([score,c])=>({
+    name:c.name,pos:c.pos,college:c.college,year:c.year,
+    summary:compSummary(c),
+    notes:`Auto-match (approx. library): ${c.profile}. Verify exact line on Sports-Reference.`,
+    score:+score.toFixed(3)
+  }));
+}
+function candidatesFor(k,row){
+  if(row.comp_candidates && row.comp_candidates.length) return row.comp_candidates;
+  return topComps(row);
+}
+function chosenComp(k,row){
+  const c = ovl().comps[k];
+  if(c && c.custom && c.custom.nfl_comparable_name) return c.custom;
+  const cands = candidatesFor(k,row);
+  const idx = (c && Number.isInteger(c.choice)) ? c.choice : 0;
+  const cc = cands[idx] || cands[0];
+  if(!cc) return null;
+  return {nfl_comparable_name:cc.name,nfl_comparable_position:cc.pos,nfl_comparable_college:cc.college,nfl_comparable_college_season_year:cc.year,nfl_comparable_college_stats_summary:cc.summary,similarity_notes:cc.notes};
+}
+
+/* ================= SORT / FILTER ================= */
+function sortedKeys(rows){
+  return Object.keys(rows).sort((ka,kb)=>{
+    const a=rows[ka],b=rows[kb];
+    if(POS_ORDER[a.position]!==POS_ORDER[b.position]) return (POS_ORDER[a.position]??9)-(POS_ORDER[b.position]??9);
+    if((a.conference||'')!==(b.conference||'')) return (a.conference||'').localeCompare(b.conference||'');
+    if((a.school||'')!==(b.school||'')) return (a.school||'').localeCompare(b.school||'');
+    if((a.full_name||'')!==(b.full_name||'')) return (a.full_name||'').localeCompare(b.full_name||'');
+    return b.season_year-a.season_year;
+  });
+}
+function passes(k,r){
+  if(activeTab!=='ALL' && r.position!==activeTab) return false;
+  if(seasonFilterVal && String(r.season_year)!==seasonFilterVal) return false;
+  if(needsCompOnly && chosenComp(k,r)) return false;
+  if(searchQuery){
+    const q=searchQuery.toLowerCase();
+    if(!(r.full_name||'').toLowerCase().includes(q) && !(r.school||'').toLowerCase().includes(q)) return false;
+  }
+  return true;
+}
+
+/* ================= ROUTER ================= */
+window.addEventListener('hashchange', route);
+function route(){
+  expandedKey=null;
+  const h = location.hash||'#/';
+  const m = h.match(/^#\/player\/(.+)$/);
+  if(m) renderPlayerPage(decodeURIComponent(m[1]));
+  else renderBoard();
+}
+
+/* ================= BOARD VIEW ================= */
+function renderBoard(){
+  const app=$('app');
+  const confOptions = manifest
+    ? manifest.conferences.map(c=>`<option value="${esc(c.slug)}" ${selectedConfs.includes(c.slug)?'selected':''}>${esc(c.name)} (${c.rows})</option>`).join('')
+    : '<option value="__example__" selected>EXAMPLE (no data yet)</option>';
+
+  app.innerHTML = `
+    <div class="meta-bar">
+      <span><b>data:</b> CFBD · built ${esc(manifest?manifest.generated:'—')}</span>
+      <span><b>seasons:</b> ${esc(manifest?manifest.years[0]+'–'+manifest.years[manifest.years.length-1]:'example only')}</span>
+      <span><b>live layer:</b> ${esc(ovl().live.updated||'none')}</span>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="filter-row">
+      <select id="confSelect" title="Conference (loads on demand)">${confOptions}</select>
+      <button class="btn small gold" id="loadAllBtn" ${manifest?'':'disabled'}>Load All FBS</button>
+      <select id="seasonFilter"><option value="">All seasons</option></select>
+      <input type="text" id="searchInput" placeholder="Search player / school…" value="${esc(searchQuery)}">
+      <label class="check-label"><input type="checkbox" id="needsCompCheck" ${needsCompOnly?'checked':''}> Missing comp</label>
+      <div class="spacer"></div>
+      <button class="btn small gold" id="addSeasonBtn">+ Manual Row</button>
+      <button class="btn small gold" id="exportCsvBtn">Export CSV</button>
+      <button class="btn small" id="refreshBtn">Refresh Now</button>
+    </div>
+    <div class="table-wrap" id="tableWrap">
+      <table class="board"><thead><tr id="theadRow"></tr></thead><tbody id="tbody"></tbody></table>
+    </div>
+    <div class="pager" id="pager"></div>
+    <div class="empty" id="emptyState" style="display:none;"></div>`;
+
+  $('confSelect').addEventListener('change', async e=>{
+    selectedConfs=[e.target.value]; page=0;
+    await ensureConfLoaded(e.target.value); renderBoard();
+  });
+  $('loadAllBtn').addEventListener('click', async ()=>{
+    if(!manifest) return;
+    $('loadAllBtn').disabled=true; $('loadAllBtn').textContent='Loading…';
+    selectedConfs = manifest.conferences.map(c=>c.slug);
+    for(const s of selectedConfs) await ensureConfLoaded(s);
+    page=0; renderBoard();
+  });
+  $('seasonFilter').addEventListener('change',e=>{seasonFilterVal=e.target.value;page=0;renderTable();});
+  $('searchInput').addEventListener('input',e=>{searchQuery=e.target.value;page=0;renderTable();});
+  $('needsCompCheck').addEventListener('change',e=>{needsCompOnly=e.target.checked;page=0;renderTable();});
+  $('addSeasonBtn').addEventListener('click',()=>{$('mSeason').value = manifest?manifest.season:new Date().getFullYear(); $('manualOverlay').classList.add('open');});
+  $('exportCsvBtn').addEventListener('click',()=>exportCsv());
+  $('refreshBtn').addEventListener('click',openRefresh);
+
+  renderTabs(); renderSeasonFilter(); renderTable();
+}
+function renderTabs(){
+  const rows=allSeasonRows();
+  const counts={ALL:0}; POSITIONS.forEach(p=>counts[p]=0);
+  Object.values(rows).forEach(r=>{counts.ALL++; if(counts[r.position]!=null)counts[r.position]++;});
+  $('tabs').innerHTML = [['ALL','All'],...POSITIONS.map(p=>[p,p])]
+    .map(([k,l])=>`<button class="tab ${activeTab===k?'active':''}" data-tab="${k}">${l} <span class="count">${counts[k]||0}</span></button>`).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{activeTab=b.dataset.tab;page=0;expandedKey=null;renderTabs();renderTable();}));
+}
+function renderSeasonFilter(){
+  const yrs=[...new Set(Object.values(allSeasonRows()).map(r=>r.season_year))].sort((a,b)=>b-a);
+  $('seasonFilter').innerHTML='<option value="">All seasons</option>'+yrs.map(y=>`<option ${String(y)===seasonFilterVal?'selected':''}>${y}</option>`).join('');
+}
+function renderTable(){
+  const rows=allSeasonRows();
+  const cols = activeTab==='ALL'?null:TABLE_COLS[activeTab];
+  let head=`<th>Player</th><th>Pos</th><th>School</th><th>Conf</th><th class="num">Season</th><th class="num">G</th>`;
+  head += cols ? cols.map(c=>`<th class="num">${c[1]}</th>`).join('') : `<th>Line</th>`;
+  head += `<th>NFL Comp</th>`;
+  $('theadRow').innerHTML=head;
+  const colspan = 7 + (cols?cols.length:1);
+
+  const ks = sortedKeys(rows).filter(k=>passes(k,rows[k]));
+  if(!ks.length){
+    $('tbody').innerHTML=''; $('pager').innerHTML='';
+    $('emptyState').style.display='block'; $('tableWrap').style.display='none';
+    $('emptyState').innerHTML = manifest
+      ? 'No rows match. Pick a conference above (data loads per conference), or clear filters.'
+      : 'Showing EXAMPLE data only — run the pipeline (see README) and serve this folder over HTTP so <b>data/manifest.json</b> can load.';
+    return;
+  }
+  $('emptyState').style.display='none'; $('tableWrap').style.display='';
+  const pages=Math.ceil(ks.length/PAGE_SIZE);
+  page=Math.min(page,pages-1);
+  const slice=ks.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
+
+  let html='';
+  slice.forEach(k=>{
+    const r=derive(rows[k]);
+    const chosen=chosenComp(k,rows[k]);
+    const isEx=(r.data_status||'').startsWith('EXAMPLE');
+    const edited=(r.data_status||'').includes('*');
+    html+=`<tr class="prow ${isEx?'example':''}" data-k="${esc(k)}">
+      <td class="player-name"><a href="#/player/${encodeURIComponent(r.player_id)}" onclick="event.stopPropagation()">${esc(r.full_name)}</a>${isEx?'<span class="example-badge">example</span>':''}${edited?'<span class="edited-dot" title="locally edited"> ●</span>':''}</td>
+      <td><span class="pos-badge">${esc(r.position)}</span></td>
+      <td>${esc(r.school||'—')}</td>
+      <td>${esc(r.conference||'—')}</td>
+      <td class="num season-badge">${esc(r.season_year)}</td>
+      <td class="num">${esc(r.games_played||'')}</td>`;
+    html += cols
+      ? cols.map(c=>`<td class="num">${esc(r[c[0]]==null?'':r[c[0]])}</td>`).join('')
+      : `<td class="comp-cell">${esc(summaryLine(r))}</td>`;
+    html+=`<td class="comp-cell ${chosen?'has-comp':''}">${esc(chosen?chosen.nfl_comparable_name:'— pick comp —')}</td></tr>`;
+    if(expandedKey===k) html+=detailRowHtml(k,rows[k],colspan);
+  });
+  $('tbody').innerHTML=html;
+  $('pager').innerHTML = pages>1
+    ? `<button class="btn small gold" id="prevPg" ${page===0?'disabled':''}>◀ Prev</button>
+       <span>Page ${page+1} / ${pages} · ${ks.length} rows</span>
+       <button class="btn small gold" id="nextPg" ${page===pages-1?'disabled':''}>Next ▶</button>`
+    : `<span>${ks.length} rows</span>`;
+  if(pages>1){
+    $('prevPg').addEventListener('click',()=>{page--;expandedKey=null;renderTable();});
+    $('nextPg').addEventListener('click',()=>{page++;expandedKey=null;renderTable();});
+  }
+  $('tbody').querySelectorAll('tr.prow').forEach(tr=>{
+    tr.addEventListener('click',()=>{const k=tr.dataset.k;expandedKey=expandedKey===k?null:k;renderTable();});
+  });
+  attachDetail();
+}
+function summaryLine(r){
+  if(r.position==='QB') return `${r.pass_yds||0} pass yds · ${r.pass_td||0}/${r.pass_int||0} TD/INT · ${r.rush_yds||0} ru yds`;
+  if(r.position==='RB') return `${r.rush_yds||0} ru yds · ${r.rush_td||0} TD · ${r.rec||0} rec`;
+  return `${r.rec||0} rec · ${r.rec_yds||0} yds · ${r.rec_td||0} TD`;
+}
+
+/* ================= DETAIL (shared by board + player page) ================= */
+function detailRowHtml(k,row,colspan){
+  return `<tr class="detail-row"><td colspan="${colspan}"><div class="detail" data-detail="${esc(k)}">${detailInnerHtml(k,row)}</div></td></tr>`;
+}
+function detailInnerHtml(k,row){
+  const r=derive(row);
+  const players=allPlayers();
+  const p=players[r.player_id]||{};
+  const cands=candidatesFor(k,row);
+  const o=ovl().comps[k]||{};
+  const chosenIdx = (o.custom&&o.custom.nfl_comparable_name)?-1:(Number.isInteger(o.choice)?o.choice:0);
+  const bits=[];
+  if(r.pass_cmp_pct!=='')bits.push(`CMP% ${r.pass_cmp_pct}`);
+  if(r.pass_yds_per_att!=='')bits.push(`Y/A ${r.pass_yds_per_att}`);
+  if(r.passer_rating!=='')bits.push(`RTG ${r.passer_rating}`);
+  if(r.rush_yds_per_att!=='')bits.push(`Rush Y/A ${r.rush_yds_per_att}`);
+  if(r.rec_yds_per_rec!=='')bits.push(`Y/R ${r.rec_yds_per_rec}`);
+  const bio=[p.height_in?`${p.height_in}"`:null,p.weight_lb?`${p.weight_lb} lb`:null,p.hometown||null,`id ${r.player_id}`].filter(Boolean).join(' · ');
+  const cu=o.custom||{};
+  return `
+    <h3>${esc(r.full_name)} · ${esc(r.position)} · ${esc(r.season_year)}</h3>
+    <div class="bio">${esc(r.school||'')} (${esc(r.conference||'—')}) · ${esc(r.class_year||'—')} · ${esc(bio)} · status ${esc(r.data_status||'')}</div>
+    <div class="stat-grid">
+      ${(EDIT_FIELDS[r.position]||EDIT_FIELDS.ATH).map(f=>`<div class="field"><label>${FIELD_LABELS[f]}</label><input type="number" min="0" data-stat="${f}" value="${r[f]!=null&&r[f]!==''?esc(r[f]):''}"></div>`).join('')}
+    </div>
+    <div class="derived-line">Derived: ${esc(bits.join(' · ')||'—')}</div>
+    <div class="comp-panel">
+      <h4>NFL Comparable — pick one of the top 3, or write your own</h4>
+      <div class="cand-row">
+        ${cands.map((c,i)=>`<div class="cand ${chosenIdx===i?'chosen':''}" data-cand="${i}">
+          <span class="crank">#${i+1}${c.score!=null?` · d=${c.score}`:''}</span>
+          <div class="cname">${esc(c.name)}</div>
+          <div class="cmeta">${esc(c.pos)} · ${esc(c.college)} ${esc(c.year)}</div>
+          <div class="csumm">${esc(c.summary)}</div>
+          <div class="cnotes">${esc(c.notes)}</div>
+        </div>`).join('') || '<div class="cnotes">No candidates — comp library not loaded.</div>'}
+      </div>
+      <div class="custom-comp">
+        <div class="comp-grid">
+          <div class="field"><label>Custom name (overrides cards)</label><input type="text" data-comp="nfl_comparable_name" value="${esc(cu.nfl_comparable_name||'')}"></div>
+          <div class="field"><label>Position</label><input type="text" data-comp="nfl_comparable_position" value="${esc(cu.nfl_comparable_position||'')}"></div>
+          <div class="field"><label>College</label><input type="text" data-comp="nfl_comparable_college" value="${esc(cu.nfl_comparable_college||'')}"></div>
+          <div class="field"><label>College season</label><input type="text" data-comp="nfl_comparable_college_season_year" value="${esc(cu.nfl_comparable_college_season_year||'')}"></div>
+          <div class="field wide"><label>College stats summary</label><textarea data-comp="nfl_comparable_college_stats_summary">${esc(cu.nfl_comparable_college_stats_summary||'')}</textarea></div>
+          <div class="field wide"><label>Similarity notes</label><textarea data-comp="similarity_notes">${esc(cu.similarity_notes||'')}</textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn small" data-save>Save Row</button>
+      <button class="btn small gold" data-revert>Revert Local Edits</button>
+      <button class="btn small gold" data-delrow>Hide Season Row</button>
+    </div>`;
+}
+function attachDetail(rerender){
+  const box=document.querySelector('[data-detail]');
+  if(!box) return;
+  const k=box.dataset.detail;
+  const refresh = rerender || renderTable;
+  box.addEventListener('click',e=>e.stopPropagation());
+  box.querySelectorAll('[data-cand]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const o=ovl(); o.comps[k]=o.comps[k]||{};
+      o.comps[k].choice=Number(el.dataset.cand);
+      delete o.comps[k].custom;
+      saveOverlay(); refresh();
+    });
+  });
+  box.querySelector('[data-save]').addEventListener('click',()=>{
+    const o=ovl();
+    const edits={};
+    box.querySelectorAll('[data-stat]').forEach(inp=>{ if(inp.value!=='') edits[inp.dataset.stat]=Number(inp.value); });
+    o.edits[k]={...(o.edits[k]||{}),...edits};
+    const custom={};
+    box.querySelectorAll('[data-comp]').forEach(inp=>{ if(inp.value.trim()) custom[inp.dataset.comp]=inp.value.trim(); });
+    if(custom.nfl_comparable_name){ o.comps[k]=o.comps[k]||{}; o.comps[k].custom=custom; }
+    saveOverlay(); refresh();
+  });
+  box.querySelector('[data-revert]').addEventListener('click',()=>{
+    const o=ovl(); delete o.edits[k]; delete o.comps[k]; saveOverlay(); refresh();
+  });
+  box.querySelector('[data-delrow]').addEventListener('click',()=>{
+    if(!confirm('Hide this season row? (Local only — Revert by clearing site data.)')) return;
+    ovl().deleted[k]=1; saveOverlay(); expandedKey=null; refresh();
+  });
+}
+
+/* ================= PLAYER PAGE ================= */
+async function renderPlayerPage(pid){
+  // make sure the player's conference is loaded — search loaded, then all
+  let found = allPlayers()[pid];
+  if(!found && manifest){
+    for(const c of manifest.conferences){
+      await ensureConfLoaded(c.slug);
+      if(loadedConfs[c.slug].players[pid]){
+        if(!selectedConfs.includes(c.slug)) selectedConfs.push(c.slug);
+        found=loadedConfs[c.slug].players[pid]; break;
+      }
+    }
+  }
+  const app=$('app');
+  if(!found){
+    app.innerHTML=`<div class="empty">Player <b>${esc(pid)}</b> not found in loaded data. <a href="#/">← back to board</a></div>`;
+    return;
+  }
+  const rows=allSeasonRows();
+  const pRows=Object.entries(rows).filter(([k,r])=>r.player_id===pid)
+    .sort((a,b)=>b[1].season_year-a[1].season_year);
+  const p=found;
+  app.innerHTML=`
+    <div class="pp-head">
+      <a href="#/">← Board</a>
+      <h2>${esc(p.full_name)}</h2>
+      <div class="pp-bio"><span class="pos-badge">${esc(p.position)}</span> · ${esc(p.school)} (${esc(p.conference)}) · ${esc(p.class_year||'—')} ·
+        ${p.height_in?esc(p.height_in)+'" · ':''}${p.weight_lb?esc(p.weight_lb)+' lb · ':''}${esc(p.hometown||'')} · id ${esc(pid)}
+        <button class="btn small gold" id="ppCsv" style="margin-left:10px;">Export player CSV</button>
+      </div>
+    </div>
+    <div class="pp-section">
+      <h3>Career — season by season</h3>
+      <div id="ppSeasons">${pRows.map(([k,r])=>playerSeasonBlock(k,r)).join('') || '<div class="empty">No stat seasons on record.</div>'}</div>
+    </div>`;
+  $('ppCsv').addEventListener('click',()=>exportCsv(pid));
+  attachPlayerSeasonHandlers(pid);
+}
+function playerSeasonBlock(k,row){
+  const r=derive(row);
+  const chosen=chosenComp(k,row);
+  return `<div class="season-block" data-sk="${esc(k)}">
+    <div class="sb-title">${esc(r.season_year)} — ${esc(r.school)} (${esc(r.conference)}) <span class="season-badge">· ${esc(r.class_year||'')}</span></div>
+    <div class="sb-line">${esc(summaryLine(r))}${r.games_played?` · ${esc(r.games_played)} G`:''}</div>
+    <div class="sb-line" style="color:var(--text-dim);">Comp: <span style="color:${chosen?'var(--yellow)':'var(--text-dim)'}">${esc(chosen?chosen.nfl_comparable_name+' ('+chosen.nfl_comparable_college+' '+chosen.nfl_comparable_college_season_year+')':'not set')}</span></div>
+    <button class="btn small gold" data-open="${esc(k)}">${'Open season editor'}</button>
+    <div data-editor style="display:none;margin-top:12px;"></div>
+  </div>`;
+}
+function attachPlayerSeasonHandlers(pid){
+  document.querySelectorAll('[data-open]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const k=btn.dataset.open;
+      const holder=btn.parentElement.querySelector('[data-editor]');
+      const open=holder.style.display!=='none';
+      document.querySelectorAll('[data-editor]').forEach(h=>{h.style.display='none';h.innerHTML='';});
+      if(open) return;
+      const rows=allSeasonRows();
+      holder.innerHTML=`<div class="detail" data-detail="${esc(k)}" style="padding:0;">${detailInnerHtml(k,rows[k])}</div>`;
+      holder.style.display='';
+      attachDetail(()=>renderPlayerPage(pid));
+    });
+  });
+}
+
+/* ================= CSV EXPORT ================= */
+function csvEscape(v){ v=v==null?'':String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function exportCsv(onlyPid){
+  const rows=allSeasonRows();
+  const players=allPlayers();
+  const lines=[];
+  lines.push('# data_sources: CollegeFootballData.com API (live pull); ESPN CFB, Sports-Reference CFB, Pro-Football-Reference/Stathead (verification & comparables)');
+  lines.push('# last_updated: '+(manifest?manifest.generated:new Date().toISOString().slice(0,10))+(ovl().live.updated?(' (+live layer '+ovl().live.updated+')'):''));
+  lines.push('# scope: '+(onlyPid?('single player '+onlyPid):('loaded conferences: '+(selectedConfs.join(', ')||'example'))));
+  lines.push('# note: comparable stat summaries are approximate; verify on Sports-Reference');
+  lines.push(CSV_COLUMNS.join(','));
+  sortedKeys(rows).forEach(k=>{
+    const r=rows[k];
+    if(onlyPid && r.player_id!==onlyPid) return;
+    const d=derive(r), p=players[r.player_id]||{}, c=chosenComp(k,r)||{};
+    lines.push(CSV_COLUMNS.map(col=>{
+      if(col in d && d[col]!==undefined && !(col in c)) return csvEscape(d[col]);
+      if(col in c) return csvEscape(c[col]);
+      if(col in p) return csvEscape(p[col]);
+      return '';
+    }).join(','));
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(onlyPid?('player_'+onlyPid):'cfb_player_seasons')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ================= MANUAL ROWS ================= */
+$('manualCancel').addEventListener('click',()=>$('manualOverlay').classList.remove('open'));
+$('manualOverlay').addEventListener('click',e=>{if(e.target.id==='manualOverlay')$('manualOverlay').classList.remove('open');});
+$('manualSave').addEventListener('click',()=>{
+  const name=$('mName').value.trim(); if(!name){alert('Enter a name.');return;}
+  const pid='MAN_'+name.toLowerCase().replace(/[^a-z0-9]+/g,'_');
+  const yr=Number($('mSeason').value)||new Date().getFullYear();
+  const o=ovl();
+  o.manual.players[pid]={player_id:pid,full_name:name,espn_id:'',school:$('mSchool').value.trim(),conference:$('mConf').value.trim(),position:$('mPos').value,class_year:$('mClass').value,height_in:'',weight_lb:'',hometown:''};
+  o.manual.seasons[key(pid,yr)]={player_id:pid,full_name:name,school:$('mSchool').value.trim(),conference:$('mConf').value.trim(),position:$('mPos').value,class_year:$('mClass').value,season_year:yr,games_played:'',games_started:'',data_status:'MANUAL'};
+  saveOverlay(); $('manualOverlay').classList.remove('open'); route();
+});
+
+/* ================= LIVE REFRESH (via proxy) ================= */
+function openRefresh(){
+  $('proxyInput').value=localStorage.getItem(LS_PROXY)||'';
+  $('refreshLog').textContent='Ready.';
+  $('refreshOverlay').classList.add('open');
+}
+$('refreshCancel').addEventListener('click',()=>$('refreshOverlay').classList.remove('open'));
+$('refreshOverlay').addEventListener('click',e=>{if(e.target.id==='refreshOverlay')$('refreshOverlay').classList.remove('open');});
+$('refreshRun').addEventListener('click',async ()=>{
+  const base=$('proxyInput').value.trim().replace(/\/$/,'');
+  if(!base){alert('Enter your proxy URL.');return;}
+  localStorage.setItem(LS_PROXY,base);
+  const logEl=$('refreshLog');
+  const log=m=>{logEl.textContent+='\n'+m;logEl.scrollTop=logEl.scrollHeight;};
+  const yearNow = manifest?manifest.season:new Date().getFullYear();
+  const confNames = manifest
+    ? manifest.conferences.filter(c=>selectedConfs.includes(c.slug)).map(c=>c.name)
+    : [];
+  if(!confNames.length){logEl.textContent='Load at least one conference on the board first.';return;}
+  $('refreshRun').disabled=true;
+  logEl.textContent=`Refreshing ${yearNow} stats for: ${confNames.join(', ')}`;
+  const STAT_MAP={passing:{COMPLETIONS:'pass_comp',ATT:'pass_att',YDS:'pass_yds',TD:'pass_td',INT:'pass_int'},rushing:{CAR:'rush_att',YDS:'rush_yds',TD:'rush_td'},receiving:{REC:'rec',YDS:'rec_yds',TD:'rec_td'}};
+  const knownPids=new Set(Object.keys(allPlayers()));
+  const o=ovl(); let n=0;
+  try{
+    for(const conf of confNames){
+      log(`· ${conf}…`);
+      const resp=await fetch(`${base}/stats/player/season?year=${yearNow}&conference=${encodeURIComponent(conf)}`);
+      if(!resp.ok) throw new Error(`proxy ${resp.status} on ${conf}`);
+      const stats=await resp.json();
+      stats.forEach(s=>{
+        const fmap=STAT_MAP[s.category]; if(!fmap) return;
+        const field=fmap[String(s.statType||'').toUpperCase()]; if(!field) return;
+        const pid=String(s.playerId||s.player_id||''); if(!knownPids.has(pid)) return;
+        const k=key(pid,yearNow);
+        o.live.seasons[k]=o.live.seasons[k]||{};
+        o.live.seasons[k][field]=Number(s.stat)||0; n++;
+      });
+      await new Promise(r=>setTimeout(r,150));
+    }
+    o.live.updated=new Date().toISOString().slice(0,16).replace('T',' ');
+    saveOverlay();
+    log(`Done — ${n} stat values layered in. Weekly rebuild adds new players & prior-year data.`);
+    route();
+  }catch(e){
+    log('FAILED: '+e.message);
+    log('Check: proxy URL, Worker deployed with CFBD_API_KEY secret, CORS allows this origin.');
+  }
+  $('refreshRun').disabled=false;
+});
+
+/* ================= DATA LOADING ================= */
+async function fetchJson(path){
+  const r=await fetch(path,{cache:'no-cache'});
+  if(!r.ok) throw new Error(r.status+' '+path);
+  return r.json();
+}
+async function ensureConfLoaded(slug){
+  if(slug==='__example__'||loadedConfs[slug]) return;
+  const conf=manifest.conferences.find(c=>c.slug===slug);
+  if(!conf) return;
+  $('stamp').textContent='Loading '+conf.name+'…';
+  loadedConfs[slug]=await fetchJson(`${DATA_DIR}/${conf.file}`);
+  $('stamp').textContent='Data '+manifest.generated;
+}
+(async function init(){
+  try{ compLib=(await fetchJson(`${DATA_DIR}/comp_library.json`)).entries; }
+  catch(e){ compLib=FALLBACK_LIB; }
+  try{
+    manifest=await fetchJson(`${DATA_DIR}/manifest.json`);
+    const first=manifest.conferences[0];
+    selectedConfs=[first.slug];
+    await ensureConfLoaded(first.slug);
+    $('stamp').textContent='Data '+manifest.generated;
+  }catch(e){
+    manifest=null; selectedConfs=['__example__'];
+    $('stamp').textContent='Example mode';
+  }
+  route();
+})();
+</script>
+</body>
+</html>
