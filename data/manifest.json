@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-01",
+ "generated": "2026-09-08",
  "season": 2026,
  "years": [
   2021,
@@ -14,8 +14,8 @@
    "name": "ACC",
    "slug": "acc",
    "file": "seasons_acc.json",
-   "players": 236,
-   "rows": 385
+   "players": 292,
+   "rows": 542
   },
   {
    "name": "American Athletic",
@@ -28,8 +28,8 @@
    "name": "Big 12",
    "slug": "big_12",
    "file": "seasons_big_12.json",
-   "players": 33,
-   "rows": 63
+   "players": 34,
+   "rows": 66
   },
   {
    "name": "Big Ten",
@@ -70,15 +70,15 @@
    "name": "Pac-12",
    "slug": "pac_12",
    "file": "seasons_pac_12.json",
-   "players": 13,
-   "rows": 20
+   "players": 17,
+   "rows": 29
   },
   {
    "name": "SEC",
    "slug": "sec",
    "file": "seasons_sec.json",
-   "players": 225,
-   "rows": 367
+   "players": 305,
+   "rows": 602
   },
   {
    "name": "Sun Belt",
