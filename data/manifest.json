@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-03",
+ "generated": "2026-11-10",
  "season": 2026,
  "years": [
   2021,
@@ -14,8 +14,8 @@
    "name": "ACC",
    "slug": "acc",
    "file": "seasons_acc.json",
-   "players": 389,
-   "rows": 693
+   "players": 394,
+   "rows": 698
   },
   {
    "name": "American Athletic",
@@ -77,8 +77,8 @@
    "name": "SEC",
    "slug": "sec",
    "file": "seasons_sec.json",
-   "players": 350,
-   "rows": 684
+   "players": 351,
+   "rows": 685
   },
   {
    "name": "Sun Belt",
